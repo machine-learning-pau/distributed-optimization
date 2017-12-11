@@ -129,6 +129,37 @@ def prediction(x,w,threshold):
         pred = 1.
     return pred
 
+def huber_loss(w, clip_delta=1):
+    '''Huber loss function
+        
+        Examples
+        --------
+        >>> f=np.vectorize(huber_loss)
+        >>> w = np.linspace(-5,5,100)
+        >>> plt.plot(w, f(w))
+    '''
+    error = np.abs(w)
+    quadratic_part = np.minimum(error, clip_delta)
+    return 0.5 * np.square(quadratic_part) + clip_delta * (error - quadratic_part)
+
+def pseudo_huber_loss(w, clip_delta=1):
+    '''Pseudo-Huber loss function'''
+    delta = clip_delta*clip_delta
+    z = 1. + np.power(w,2)/delta
+    return delta*np.sum(np.sqrt(z) - 1.)
+
+def pseudo_huber_grad(w, clip_delta=1):
+    '''Pseudo-Huber gradient function'''
+    delta = clip_delta*clip_delta
+    z = 1. + np.power(w,2)/delta
+    return np.sum(np.divide(w, np.sqrt(z)))
+
+def pseudo_huber_hessian(w, clip_delta=1):
+    '''Pseudo-Huber hessian function'''
+    delta = clip_delta*clip_delta
+    z = 1. + np.power(w,2)/delta
+    return np.sum( np.divide( 1. + np.power(w,2)*(1. + np.sqrt(z))/delta, np.power(z,1.5) ) )
+
 def show_progress(k,w,f,gradf):
     '''Shows algorithm progress. 
     
@@ -200,7 +231,7 @@ def data_plot(x, y, w):
     # x2 = - w0/w2 - (w1/w2)*x1
     x2 = [-(w[0] + w[1]*i)/w[2] for i in x1] 
     plt.plot(x1, x2, linewidth=2.0)
-    plt.title("Class +1 (green), Class -1 (red)")
+    plt.title("Classe +1 (verte), Classe -1 (rouge)")
     plt.grid()
     plt.show()
 
@@ -220,7 +251,7 @@ def iteration_plot(nbGraphs=1, f=0, label=["line1"]):
 
     plt.figure(figsize=(15,5))
     nbIter = len(f[:,1])
-    colori = ["black", "blue", "red", "green"]
+    colori = ["black", "blue", "red", "green", "pink", "grey", "cyan"]
     
     for i in range(nbGraphs):
         plt.plot(range(nbIter), f[:,i], color=colori[i], label=label[i],
